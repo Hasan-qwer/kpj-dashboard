@@ -13,11 +13,11 @@ const MONTH_NAMES = [
 ]
 
 const STATUS_DOT: Record<string, string> = {
-  scheduled: 'bg-blue-400',
+  pending:   'bg-blue-400',
   confirmed: 'bg-emerald-400',
   completed: 'bg-slate-400',
   cancelled: 'bg-red-400',
-  no_show: 'bg-amber-400',
+  no_show:   'bg-amber-400',
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -163,11 +163,12 @@ export default function SchedulesPage() {
                               appt.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
                               appt.status === 'cancelled' ? 'bg-red-100 text-red-600' :
                               appt.status === 'completed' ? 'bg-slate-100 text-slate-500' :
+                              appt.status === 'no_show' ? 'bg-amber-100 text-amber-700' :
                               'bg-blue-100 text-blue-700'
                             }`}
                           >
                             <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[appt.status] ?? 'bg-slate-400'}`} />
-                            <span className="truncate">{appt.patient_name.split(' ')[0]}</span>
+                            <span className="truncate">{appt.customer_name.split(' ')[0]}</span>
                           </div>
                         ))}
                         {dayAppts.length > 3 && (
@@ -186,7 +187,7 @@ export default function SchedulesPage() {
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2"
               style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)' }}
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}>
                 <CalendarClock size={15} className="text-white" />
               </div>
               <div>
@@ -214,8 +215,8 @@ export default function SchedulesPage() {
                       <div key={appt.id} className="px-5 py-4 hover:bg-slate-50 transition-colors">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-800 truncate">{appt.patient_name}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">{appt.patient_phone ?? 'No phone'}</p>
+                            <p className="text-sm font-semibold text-slate-800 truncate">{appt.customer_name}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{appt.customer_phone ?? 'No phone'}</p>
                           </div>
                           <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${getStatusColor(appt.status)}`}>
                             {appt.status.replace('_', ' ')}
@@ -224,13 +225,15 @@ export default function SchedulesPage() {
 
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
+                            <div
+                              className="w-4 h-4 rounded flex items-center justify-center"
+                              style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%)' }}
+                            >
                               <CalendarClock size={9} className="text-white" />
                             </div>
                             <span className="text-xs font-semibold text-slate-600">{appt.appointment_time}</span>
                           </div>
-                          <p className="text-xs text-slate-500 ml-6">{appt.doctor_name}</p>
-                          <p className="text-xs text-slate-400 ml-6">{appt.specialty}</p>
+                          <p className="text-xs text-slate-500 ml-6">{appt.reason}</p>
                           {appt.notes && (
                             <p className="text-xs text-slate-400 ml-6 italic mt-1">{appt.notes}</p>
                           )}

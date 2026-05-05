@@ -36,6 +36,7 @@ export function getStatusColor(status: string): string {
     registered: 'bg-blue-100 text-blue-800',
     error: 'bg-red-100 text-red-800',
     scheduled: 'bg-blue-100 text-blue-800',
+    pending:   'bg-blue-100 text-blue-800',
     confirmed: 'bg-green-100 text-green-800',
     completed: 'bg-gray-100 text-gray-700',
     cancelled: 'bg-red-100 text-red-800',

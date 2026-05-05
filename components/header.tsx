@@ -45,7 +45,7 @@ export function Header({ title, subtitle, onRefresh, refreshing }: HeaderProps) 
         const today = new Date().toISOString().slice(0, 10)
         setUpcomingAppts(
           Array.isArray(data)
-            ? data.filter((a: Appointment) => a.appointment_date >= today && a.status !== 'cancelled').slice(0, 5)
+            ? data.filter((a: Appointment) => a.appointment_date >= today && a.status !== 'cancelled' && a.status !== 'completed' && a.status !== 'no_show').slice(0, 5)
             : []
         )
       }
@@ -192,9 +192,9 @@ export function Header({ title, subtitle, onRefresh, refreshing }: HeaderProps) 
                         <CalendarDays size={12} className="text-rose-500" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-700 truncate">{appt.patient_name}</p>
+                        <p className="text-xs font-medium text-slate-700 truncate">{appt.customer_name}</p>
                         <p className="text-[11px] text-slate-400 truncate">
-                          {appt.doctor_name} · {appt.appointment_date}
+                          {appt.reason} · {appt.appointment_date}
                         </p>
                       </div>
                     </div>

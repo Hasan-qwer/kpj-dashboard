@@ -34,16 +34,14 @@ export interface TranscriptSegment {
 
 export interface Appointment {
   id: string
-  patient_name: string
-  patient_phone?: string
-  doctor_name: string
-  specialty: string
+  customer_name: string
+  customer_phone?: string
   appointment_date: string
   appointment_time: string
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  reason: string
   notes?: string
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
   created_at: string
-  call_id?: string
 }
 
 export interface DashboardStats {

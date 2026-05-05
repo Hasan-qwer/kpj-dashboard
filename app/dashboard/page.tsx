@@ -59,7 +59,10 @@ export default function DashboardPage() {
   const todayDateStr = todayStart.toISOString().slice(0, 10)
   const todayAppts = appointments.filter(a => a.appointment_date === todayDateStr)
   const upcomingAppts = appointments.filter(a =>
-    a.appointment_date >= todayDateStr && a.status !== 'cancelled' && a.status !== 'completed'
+    a.appointment_date >= todayDateStr &&
+    a.status !== 'cancelled' &&
+    a.status !== 'completed' &&
+    a.status !== 'no_show'
   )
 
   const statValues: Record<string, { value: string | number; sub: string }> = {
@@ -242,8 +245,8 @@ export default function DashboardPage() {
                           <CalendarDays size={13} className="text-rose-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-700 truncate">{appt.patient_name}</p>
-                          <p className="text-xs text-slate-400 truncate">{appt.doctor_name}</p>
+                          <p className="text-sm font-medium text-slate-700 truncate">{appt.customer_name}</p>
+                          <p className="text-xs text-slate-400 truncate">{appt.reason}</p>
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-xs font-semibold text-slate-600">{appt.appointment_date}</p>

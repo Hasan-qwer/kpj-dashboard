@@ -3,19 +3,18 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Header } from '@/components/header'
 import { formatDate, getStatusColor } from '@/lib/utils'
-import { DOCTORS } from '@/lib/doctors-data'
 import type { Appointment } from '@/types'
-import { CalendarDays, Search, Plus, X, ChevronDown, Check, UserRound, Clock } from 'lucide-react'
+import { CalendarDays, Search, Plus, X, ChevronDown, Check, Clock } from 'lucide-react'
 
-const STATUS_OPTIONS = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'] as const
+const STATUS_OPTIONS = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'] as const
 type AppointmentStatus = typeof STATUS_OPTIONS[number]
 
 const STATUS_STYLES: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-700',
+  pending:   'bg-blue-100 text-blue-700',
   confirmed: 'bg-emerald-100 text-emerald-700',
   completed: 'bg-slate-100 text-slate-600',
   cancelled: 'bg-red-100 text-red-600',
-  no_show: 'bg-amber-100 text-amber-700',
+  no_show:   'bg-amber-100 text-amber-700',
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -33,24 +32,16 @@ interface AddAppointmentModalProps {
 
 function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
   const [form, setForm] = useState({
-    patient_name: '',
-    patient_phone: '',
-    doctor_name: '',
-    specialty: '',
+    customer_name: '',
+    customer_phone: '',
     appointment_date: '',
     appointment_time: '',
-    status: 'scheduled' as AppointmentStatus,
+    reason: '',
     notes: '',
+    status: 'pending' as AppointmentStatus,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-
-  const selectedDoctor = DOCTORS.find(d => d.name === form.doctor_name)
-
-  function handleDoctorChange(name: string) {
-    const doc = DOCTORS.find(d => d.name === name)
-    setForm(f => ({ ...f, doctor_name: name, specialty: doc?.department ?? f.specialty }))
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,7 +53,7 @@ function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) { setError((await res.json()).error ?? 'Failed'); return }
+      if (!res.ok) { setError((await res.json()).error ?? 'Failed to save'); return }
       onSaved()
     } catch (err) {
       setError(String(err))
@@ -74,8 +65,8 @@ function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100"
+        <div
+          className="flex items-center justify-between px-6 py-5 border-b border-slate-100"
           style={{ background: 'linear-gradient(135deg, #002855 0%, #0057a8 100%)' }}
         >
           <div className="flex items-center gap-3">
@@ -99,24 +90,24 @@ function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Patient Name *</label>
               <input
                 required
-                value={form.patient_name}
-                onChange={e => setForm(f => ({ ...f, patient_name: e.target.value }))}
+                value={form.customer_name}
+                onChange={e => setForm(f => ({ ...f, customer_name: e.target.value }))}
                 className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-slate-50"
                 placeholder="Full name"
               />
             </div>
 
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Phone</label>
               <input
-                value={form.patient_phone}
-                onChange={e => setForm(f => ({ ...f, patient_phone: e.target.value }))}
+                value={form.customer_phone}
+                onChange={e => setForm(f => ({ ...f, customer_phone: e.target.value }))}
                 className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-slate-50"
                 placeholder="+601X-XXXXXXX"
               />
             </div>
 
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Status</label>
               <select
                 value={form.status}
@@ -128,19 +119,14 @@ function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Doctor *</label>
-              <select
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Reason / Doctor / Specialty *</label>
+              <input
                 required
-                value={form.doctor_name}
-                onChange={e => handleDoctorChange(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-white"
-              >
-                <option value="">Select doctor…</option>
-                {DOCTORS.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-              </select>
-              {selectedDoctor && (
-                <p className="text-xs text-blue-500 mt-1 font-medium">{selectedDoctor.department}</p>
-              )}
+                value={form.reason}
+                onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
+                className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-slate-50"
+                placeholder="e.g. Cardiology – Dr. Ahmad – first visit"
+              />
             </div>
 
             <div>
@@ -164,7 +150,7 @@ function AddAppointmentModal({ onClose, onSaved }: AddAppointmentModalProps) {
             <div className="col-span-2">
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Notes</label>
               <textarea
-                rows={3}
+                rows={2}
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-slate-50 resize-none"
@@ -268,10 +254,9 @@ export default function AppointmentsPage() {
     const matchDate = !dateFilter || a.appointment_date === dateFilter
     const q = search.toLowerCase()
     const matchSearch = !q ||
-      a.patient_name.toLowerCase().includes(q) ||
-      a.doctor_name.toLowerCase().includes(q) ||
-      a.specialty.toLowerCase().includes(q) ||
-      (a.patient_phone ?? '').includes(q)
+      a.customer_name.toLowerCase().includes(q) ||
+      a.reason.toLowerCase().includes(q) ||
+      (a.customer_phone ?? '').includes(q)
     return matchStatus && matchDate && matchSearch
   })
 
@@ -280,7 +265,9 @@ export default function AppointmentsPage() {
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const todayCount = appointments.filter(a => a.appointment_date === todayStr).length
-  const upcomingCount = appointments.filter(a => a.appointment_date >= todayStr && a.status !== 'cancelled').length
+  const upcomingCount = appointments.filter(a =>
+    a.appointment_date >= todayStr && a.status !== 'cancelled' && a.status !== 'completed'
+  ).length
 
   return (
     <div className="flex flex-col min-h-full bg-slate-50">
@@ -305,7 +292,7 @@ export default function AppointmentsPage() {
             { label: 'Total',     value: appointments.length,   iconBg: 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)', icon: CalendarDays },
             { label: 'Today',     value: todayCount,            iconBg: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)', icon: Clock },
             { label: 'Upcoming',  value: upcomingCount,         iconBg: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)', icon: CalendarDays },
-            { label: 'Confirmed', value: counts.confirmed ?? 0, iconBg: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)', icon: UserRound },
+            { label: 'Confirmed', value: counts.confirmed ?? 0, iconBg: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)', icon: CalendarDays },
           ].map(({ label, value, iconBg, icon: Icon }) => (
             <div key={label} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-3">
               <div
@@ -329,7 +316,7 @@ export default function AppointmentsPage() {
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search patient, doctor, or specialty…"
+                placeholder="Search patient name, reason, or phone…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/30 bg-slate-50"
@@ -358,11 +345,15 @@ export default function AppointmentsPage() {
                 onClick={() => setStatusFilter(s)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   statusFilter === s
-                    ? 'bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-md shadow-blue-200'
+                    ? 'text-white shadow-md'
                     : s === 'all'
                     ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     : `${STATUS_STYLES[s] ?? 'bg-slate-100 text-slate-600'} hover:opacity-80`
                 }`}
+                style={statusFilter === s
+                  ? { background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)' }
+                  : undefined
+                }
               >
                 {s === 'all' ? 'All' : s.replace('_', ' ')} ({counts[s] ?? 0})
               </button>
@@ -374,7 +365,10 @@ export default function AppointmentsPage() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, #f472b6 0%, #f43f5e 100%)' }}
+              >
                 <CalendarDays size={11} className="text-white" />
               </div>
               <span className="text-sm font-semibold text-slate-700">
@@ -400,10 +394,9 @@ export default function AppointmentsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    {['Patient', 'Phone', 'Doctor', 'Specialty', 'Date / Time', 'Status', ''].map(h => (
+                    {['Patient', 'Phone', 'Reason / Doctor', 'Date / Time', 'Status', ''].map(h => (
                       <th key={h} className={`text-left px-5 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide ${
-                        h === 'Phone' ? 'hidden md:table-cell' :
-                        h === 'Specialty' ? 'hidden lg:table-cell' : ''
+                        h === 'Phone' ? 'hidden md:table-cell' : ''
                       }`}>{h}</th>
                     ))}
                   </tr>
@@ -412,16 +405,17 @@ export default function AppointmentsPage() {
                   {filtered.map(appt => (
                     <tr key={appt.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-5 py-3.5">
-                        <p className="font-semibold text-slate-800">{appt.patient_name}</p>
+                        <p className="font-semibold text-slate-800">{appt.customer_name}</p>
                         {appt.notes && (
-                          <p className="text-xs text-slate-400 mt-0.5 truncate max-w-36">{appt.notes}</p>
+                          <p className="text-xs text-slate-400 mt-0.5 truncate max-w-40">{appt.notes}</p>
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-slate-500 text-sm hidden md:table-cell">
-                        {appt.patient_phone ?? '—'}
+                        {appt.customer_phone ?? '—'}
                       </td>
-                      <td className="px-5 py-3.5 text-slate-700 font-medium text-sm">{appt.doctor_name}</td>
-                      <td className="px-5 py-3.5 text-slate-400 text-xs hidden lg:table-cell">{appt.specialty}</td>
+                      <td className="px-5 py-3.5">
+                        <p className="text-slate-700 font-medium text-sm truncate max-w-48">{appt.reason}</p>
+                      </td>
                       <td className="px-5 py-3.5">
                         <p className="text-slate-700 font-semibold text-sm">{formatDate(appt.appointment_date)}</p>
                         <p className="text-xs text-slate-400 mt-0.5">{appt.appointment_time}</p>

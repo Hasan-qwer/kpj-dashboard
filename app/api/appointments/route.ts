@@ -21,9 +21,20 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const body = await request.json()
 
+  // Accept either schema: dashboard form uses customer_name/reason directly
+  const row = {
+    customer_name: body.customer_name ?? body.patient_name,
+    customer_phone: body.customer_phone ?? body.patient_phone ?? null,
+    appointment_date: body.appointment_date,
+    appointment_time: body.appointment_time,
+    reason: body.reason ?? body.specialty ?? '',
+    notes: body.notes ?? null,
+    status: body.status ?? 'pending',
+  }
+
   const { data, error } = await supabase
     .from('appointments')
-    .insert(body)
+    .insert(row)
     .select()
     .single()
 
