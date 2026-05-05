@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KPJ Damansara — Voice Agent Dashboard
 
-## Getting Started
+A Next.js 16 dashboard for monitoring the Retell AI voice agent at KPJ Damansara Specialist Hospital. Includes call monitoring with transcripts, doctor directory, appointment management, and Supabase authentication.
 
-First, run the development server:
+---
+
+## Pages
+
+| Route | Description |
+|---|---|
+| `/login` | Email/password login (Supabase Auth) |
+| `/dashboard` | Overview stats — calls, appointments, recent activity |
+| `/dashboard/calls` | All Retell AI calls with expandable transcripts, audio playback, filters |
+| `/dashboard/doctors` | Full doctor directory (97 doctors) with search, department and language filters |
+| `/dashboard/appointments` | Appointment table with add, status update, date and status filters |
+
+---
+
+## Setup
+
+### 1. Install
+
+```bash
+cd dashboard
+npm install
+```
+
+### 2. Environment variables
+
+Copy `.env.local.example` to `.env.local` and fill in:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+RETELL_API_KEY=your-retell-api-key
+```
+
+### 3. Supabase setup
+
+1. Create a new Supabase project at supabase.com
+2. Run `supabase-schema.sql` in the SQL editor — creates the `appointments` table with RLS
+3. Go to **Authentication → Users** and create your admin user (email + password)
+
+### 4. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Vercel
 
-## Learn More
+1. Push this `dashboard/` folder to a GitHub repo
+2. Import the repo in vercel.com/new
+3. Set the **Root Directory** to `dashboard` if you pushed the parent folder
+4. Add all 3 environment variables in Vercel → Settings → Environment Variables
+5. Deploy — Vercel auto-detects Next.js
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Retell AI Integration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The dashboard calls Retell AI's REST API from server-side API routes:
 
-## Deploy on Vercel
+- `GET /api/calls` — lists all calls (POST to Retell `v2/list-calls`)
+- `GET /api/calls/[callId]` — fetches one call with full transcript
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Your `RETELL_API_KEY` is never exposed to the browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Tech stack
+
+- Next.js 16 (App Router, Turbopack)
+- Supabase — Auth + PostgreSQL (appointments)
+- Retell AI — Voice call data and transcripts
+- Tailwind CSS 4
+- lucide-react icons
