@@ -6,36 +6,93 @@ import { formatDuration, formatTimestamp, getStatusColor } from '@/lib/utils'
 import { DOCTORS } from '@/lib/doctors-data'
 import type { RetellCall, Appointment } from '@/types'
 import {
-  Phone,
-  UserRound,
-  CalendarDays,
-  Clock,
-  TrendingUp,
-  Activity,
-  CheckCircle2,
-  AlertCircle,
+  Phone, UserRound, CalendarDays, Clock,
+  TrendingUp, Activity, CheckCircle2, AlertCircle,
+  ArrowUpRight, Mic,
 } from 'lucide-react'
 
-interface StatCardProps {
-  label: string
-  value: string | number
-  sub?: string
-  icon: React.ReactNode
-  color: string
-}
-
-function StatCard({ label, value, sub, icon, color }: StatCardProps) {
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-start gap-4">
-      <div className={`${color} p-3 rounded-lg shrink-0`}>{icon}</div>
-      <div>
-        <p className="text-sm text-slate-500 font-medium">{label}</p>
-        <p className="text-2xl font-bold text-slate-800 mt-0.5">{value}</p>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  )
-}
+const STAT_CARDS = [
+  {
+    key: 'callsToday',
+    label: 'Calls Today',
+    icon: Phone,
+    gradient: 'from-sky-400 to-blue-600',
+    bg: 'from-sky-50 to-blue-50',
+    border: 'border-sky-100',
+    text: 'text-blue-600',
+    subText: 'text-blue-400',
+  },
+  {
+    key: 'totalCalls',
+    label: 'Total Calls',
+    icon: TrendingUp,
+    gradient: 'from-violet-400 to-purple-600',
+    bg: 'from-violet-50 to-purple-50',
+    border: 'border-violet-100',
+    text: 'text-violet-600',
+    subText: 'text-violet-400',
+  },
+  {
+    key: 'avgDuration',
+    label: 'Avg Duration',
+    icon: Clock,
+    gradient: 'from-emerald-400 to-teal-500',
+    bg: 'from-emerald-50 to-teal-50',
+    border: 'border-emerald-100',
+    text: 'text-emerald-600',
+    subText: 'text-emerald-400',
+  },
+  {
+    key: 'doctors',
+    label: 'Doctors',
+    icon: UserRound,
+    gradient: 'from-amber-400 to-orange-500',
+    bg: 'from-amber-50 to-orange-50',
+    border: 'border-amber-100',
+    text: 'text-amber-600',
+    subText: 'text-amber-400',
+  },
+  {
+    key: 'todayAppts',
+    label: "Today's Appts",
+    icon: CalendarDays,
+    gradient: 'from-pink-400 to-rose-500',
+    bg: 'from-pink-50 to-rose-50',
+    border: 'border-pink-100',
+    text: 'text-rose-600',
+    subText: 'text-rose-400',
+  },
+  {
+    key: 'upcoming',
+    label: 'Upcoming',
+    icon: Activity,
+    gradient: 'from-cyan-400 to-sky-500',
+    bg: 'from-cyan-50 to-sky-50',
+    border: 'border-cyan-100',
+    text: 'text-cyan-600',
+    subText: 'text-cyan-400',
+  },
+  {
+    key: 'completed',
+    label: 'Completed',
+    icon: CheckCircle2,
+    gradient: 'from-green-400 to-emerald-600',
+    bg: 'from-green-50 to-emerald-50',
+    border: 'border-green-100',
+    text: 'text-green-600',
+    subText: 'text-green-400',
+  },
+  {
+    key: 'cancelled',
+    label: 'Cancelled',
+    icon: AlertCircle,
+    gradient: 'from-red-400 to-rose-600',
+    bg: 'from-red-50 to-rose-50',
+    border: 'border-red-100',
+    text: 'text-red-600',
+    subText: 'text-red-400',
+  },
+]
 
 export default function DashboardPage() {
   const [calls, setCalls] = useState<RetellCall[]>([])
@@ -50,14 +107,8 @@ export default function DashboardPage() {
         fetch('/api/calls?limit=200'),
         fetch('/api/appointments'),
       ])
-      if (callsRes.ok) {
-        const data = await callsRes.json()
-        setCalls(Array.isArray(data) ? data : [])
-      }
-      if (apptRes.ok) {
-        const data = await apptRes.json()
-        setAppointments(Array.isArray(data) ? data : [])
-      }
+      if (callsRes.ok) setCalls(await callsRes.json().then(d => Array.isArray(d) ? d : []))
+      if (apptRes.ok) setAppointments(await apptRes.json().then(d => Array.isArray(d) ? d : []))
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -66,170 +117,208 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Derived stats
   const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
   const todayTs = todayStart.getTime()
   const todayCalls = calls.filter(c => (c.start_timestamp ?? 0) >= todayTs)
   const ongoingCalls = calls.filter(c => c.call_status === 'ongoing')
   const endedCalls = calls.filter(c => c.call_status === 'ended' && c.duration_ms)
   const avgDuration = endedCalls.length
-    ? Math.round(endedCalls.reduce((sum, c) => sum + (c.duration_ms ?? 0), 0) / endedCalls.length)
+    ? Math.round(endedCalls.reduce((s, c) => s + (c.duration_ms ?? 0), 0) / endedCalls.length)
     : 0
-
   const todayDateStr = todayStart.toISOString().slice(0, 10)
   const todayAppts = appointments.filter(a => a.appointment_date === todayDateStr)
   const upcomingAppts = appointments.filter(a =>
     a.appointment_date >= todayDateStr && a.status !== 'cancelled' && a.status !== 'completed'
   )
 
-  const recentCalls = calls.slice(0, 6)
+  const statValues: Record<string, { value: string | number; sub: string }> = {
+    callsToday: { value: todayCalls.length, sub: `${ongoingCalls.length} ongoing` },
+    totalCalls: { value: calls.length, sub: 'All time' },
+    avgDuration: { value: formatDuration(avgDuration), sub: 'Per ended call' },
+    doctors: { value: DOCTORS.length, sub: '45+ specialties' },
+    todayAppts: { value: todayAppts.length, sub: 'Scheduled today' },
+    upcoming: { value: upcomingAppts.length, sub: 'Scheduled / confirmed' },
+    completed: { value: appointments.filter(a => a.status === 'completed').length, sub: 'All time' },
+    cancelled: { value: appointments.filter(a => a.status === 'cancelled').length, sub: 'All time' },
+  }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-full bg-slate-50">
       <Header
         title="Overview"
+        subtitle="KPJ Damansara Voice Agent Dashboard"
         onRefresh={() => fetchData(true)}
         refreshing={refreshing}
       />
 
-      <div className="flex-1 p-4 lg:p-6 space-y-6 overflow-auto">
+      <div className="flex-1 p-4 lg:p-6 space-y-6">
+        {/* Hero banner */}
+        <div
+          className="rounded-2xl p-6 text-white relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #002855 0%, #004a9c 50%, #0066cc 100%)' }}
+        >
+          {/* Decorative circles */}
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
+          <div className="absolute -bottom-10 right-20 w-32 h-32 rounded-full bg-white/5" />
+          <div className="absolute top-4 right-36 w-16 h-16 rounded-full bg-sky-400/20" />
+
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-300 text-xs font-semibold uppercase tracking-wide">System Active</span>
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+              <p className="text-blue-200 text-sm mt-1">
+                {new Date().toLocaleDateString('en-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <div className="bg-white/10 rounded-xl px-4 py-3 text-center border border-white/10">
+                <p className="text-2xl font-bold">{ongoingCalls.length}</p>
+                <p className="text-blue-200 text-xs mt-0.5">Live Calls</p>
+              </div>
+              <div className="bg-white/10 rounded-xl px-4 py-3 text-center border border-white/10">
+                <p className="text-2xl font-bold">{todayCalls.length}</p>
+                <p className="text-blue-200 text-xs mt-0.5">Today</p>
+              </div>
+              <div className="bg-white/10 rounded-xl px-4 py-3 text-center border border-white/10">
+                <p className="text-2xl font-bold">{upcomingAppts.length}</p>
+                <p className="text-blue-200 text-xs mt-0.5">Upcoming Appts</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <div className="w-8 h-8 border-2 border-[#003366] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-slate-500 text-sm">Loading dashboard…</p>
+              <div className="w-10 h-10 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">Loading dashboard…</p>
             </div>
           </div>
         ) : (
           <>
-            {/* Stats */}
+            {/* Stat cards grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                label="Calls Today"
-                value={todayCalls.length}
-                sub={`${ongoingCalls.length} ongoing`}
-                icon={<Phone size={20} className="text-blue-600" />}
-                color="bg-blue-50"
-              />
-              <StatCard
-                label="Total Calls"
-                value={calls.length}
-                sub="All time"
-                icon={<TrendingUp size={20} className="text-indigo-600" />}
-                color="bg-indigo-50"
-              />
-              <StatCard
-                label="Avg Duration"
-                value={formatDuration(avgDuration)}
-                sub="Ended calls"
-                icon={<Clock size={20} className="text-emerald-600" />}
-                color="bg-emerald-50"
-              />
-              <StatCard
-                label="Doctors"
-                value={DOCTORS.length}
-                sub="45+ specialties"
-                icon={<UserRound size={20} className="text-violet-600" />}
-                color="bg-violet-50"
-              />
-              <StatCard
-                label="Today's Appointments"
-                value={todayAppts.length}
-                icon={<CalendarDays size={20} className="text-amber-600" />}
-                color="bg-amber-50"
-              />
-              <StatCard
-                label="Upcoming"
-                value={upcomingAppts.length}
-                sub="Scheduled / confirmed"
-                icon={<Activity size={20} className="text-cyan-600" />}
-                color="bg-cyan-50"
-              />
-              <StatCard
-                label="Completed"
-                value={appointments.filter(a => a.status === 'completed').length}
-                sub="All time"
-                icon={<CheckCircle2 size={20} className="text-green-600" />}
-                color="bg-green-50"
-              />
-              <StatCard
-                label="Cancelled"
-                value={appointments.filter(a => a.status === 'cancelled').length}
-                sub="All time"
-                icon={<AlertCircle size={20} className="text-red-500" />}
-                color="bg-red-50"
-              />
-            </div>
+              {STAT_CARDS.map(({ key, label, icon: Icon, gradient, bg, border, text, subText }) => {
+                const stat = statValues[key]
+                return (
+                  <div
+                    key={key}
+                    className={`relative bg-gradient-to-br ${bg} rounded-2xl border ${border} p-5 overflow-hidden group hover:shadow-md transition-all duration-200`}
+                  >
+                    {/* Background decoration */}
+                    <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-white/40 group-hover:scale-110 transition-transform duration-300" />
 
-            {/* Recent Calls */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-semibold text-slate-800">Recent Calls</h2>
-                <a href="/dashboard/calls" className="text-sm text-[#003366] hover:underline font-medium">
-                  View all →
-                </a>
-              </div>
-              {recentCalls.length === 0 ? (
-                <div className="px-5 py-10 text-center text-slate-400 text-sm">No calls recorded yet.</div>
-              ) : (
-                <div className="divide-y divide-slate-50">
-                  {recentCalls.map(call => (
-                    <div key={call.call_id} className="px-5 py-3 flex items-center gap-4">
-                      <div className="shrink-0">
-                        <Phone size={16} className="text-slate-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-700 font-medium truncate">
-                          {call.from_number ?? call.call_id.slice(0, 16) + '…'}
-                        </p>
-                        <p className="text-xs text-slate-400">{formatTimestamp(call.start_timestamp)}</p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-slate-500">{formatDuration(call.duration_ms)}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(call.call_status)}`}>
-                          {call.call_status}
-                        </span>
-                      </div>
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 shadow-md`}>
+                      <Icon size={18} className="text-white" />
                     </div>
-                  ))}
-                </div>
-              )}
+                    <p className={`text-2xl font-bold ${text}`}>{stat.value}</p>
+                    <p className="text-xs font-semibold text-slate-600 mt-0.5">{label}</p>
+                    <p className={`text-xs ${subText} mt-0.5`}>{stat.sub}</p>
+                  </div>
+                )
+              })}
             </div>
 
-            {/* Upcoming Appointments */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-semibold text-slate-800">Upcoming Appointments</h2>
-                <a href="/dashboard/appointments" className="text-sm text-[#003366] hover:underline font-medium">
-                  View all →
-                </a>
+            {/* Two column layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Calls */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                      <Phone size={13} className="text-white" />
+                    </div>
+                    <h2 className="font-semibold text-slate-800 text-sm">Recent Calls</h2>
+                  </div>
+                  <a
+                    href="/dashboard/calls"
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    View all <ArrowUpRight size={12} />
+                  </a>
+                </div>
+
+                {calls.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 text-sm">No calls recorded yet.</div>
+                ) : (
+                  <div className="divide-y divide-slate-50">
+                    {calls.slice(0, 6).map(call => (
+                      <div key={call.call_id} className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          call.call_status === 'ongoing'
+                            ? 'bg-emerald-100'
+                            : call.call_status === 'error'
+                            ? 'bg-red-100'
+                            : 'bg-slate-100'
+                        }`}>
+                          <Mic size={13} className={
+                            call.call_status === 'ongoing' ? 'text-emerald-600' :
+                            call.call_status === 'error' ? 'text-red-500' : 'text-slate-400'
+                          } />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">
+                            {call.from_number ?? 'Unknown caller'}
+                          </p>
+                          <p className="text-xs text-slate-400">{formatTimestamp(call.start_timestamp)}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-slate-400">{formatDuration(call.duration_ms)}</span>
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${getStatusColor(call.call_status)}`}>
+                            {call.call_status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {upcomingAppts.length === 0 ? (
-                <div className="px-5 py-10 text-center text-slate-400 text-sm">No upcoming appointments.</div>
-              ) : (
-                <div className="divide-y divide-slate-50">
-                  {upcomingAppts.slice(0, 6).map(appt => (
-                    <div key={appt.id} className="px-5 py-3 flex items-center gap-4">
-                      <div className="shrink-0">
-                        <CalendarDays size={16} className="text-slate-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-700 font-medium truncate">{appt.patient_name}</p>
-                        <p className="text-xs text-slate-400">{appt.doctor_name} · {appt.specialty}</p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0 text-right">
-                        <div>
-                          <p className="text-xs text-slate-600 font-medium">{appt.appointment_date}</p>
+
+              {/* Upcoming Appointments */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+                      <CalendarDays size={13} className="text-white" />
+                    </div>
+                    <h2 className="font-semibold text-slate-800 text-sm">Upcoming Appointments</h2>
+                  </div>
+                  <a
+                    href="/dashboard/appointments"
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    View all <ArrowUpRight size={12} />
+                  </a>
+                </div>
+
+                {upcomingAppts.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 text-sm">No upcoming appointments.</div>
+                ) : (
+                  <div className="divide-y divide-slate-50">
+                    {upcomingAppts.slice(0, 6).map(appt => (
+                      <div key={appt.id} className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                          <CalendarDays size={13} className="text-rose-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">{appt.patient_name}</p>
+                          <p className="text-xs text-slate-400 truncate">{appt.doctor_name}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-semibold text-slate-600">{appt.appointment_date}</p>
                           <p className="text-xs text-slate-400">{appt.appointment_time}</p>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(appt.status)}`}>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${getStatusColor(appt.status)}`}>
                           {appt.status}
                         </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
