@@ -17,7 +17,7 @@ const STAT_CARDS = [
   { key: 'totalCalls',  label: 'Total Calls',      icon: TrendingUp,    color: 'purple'  },
   { key: 'avgDuration', label: 'Avg Duration',     icon: Clock,         color: 'emerald' },
   { key: 'doctors',     label: 'Doctors',          icon: UserRound,     color: 'amber'   },
-  { key: 'todayAppts',  label: "Today's Appts",    icon: CalendarDays,  color: 'rose'    },
+  { key: 'todayAppts',  label: 'Active Appts',      icon: CalendarDays,  color: 'rose'    },
   { key: 'upcoming',    label: 'Upcoming',         icon: Activity,      color: 'cyan'    },
   { key: 'completed',   label: 'Completed',        icon: CheckCircle2,  color: 'green'   },
   { key: 'cancelled',   label: 'Cancelled',        icon: AlertCircle,   color: 'red'     },
@@ -70,8 +70,8 @@ export default function DashboardPage() {
     totalCalls:  { value: calls.length, sub: 'All time' },
     avgDuration: { value: formatDuration(avgDuration), sub: 'Per ended call' },
     doctors:     { value: DOCTORS.length, sub: '45+ specialties' },
-    todayAppts:  { value: todayAppts.length, sub: 'Scheduled today' },
-    upcoming:    { value: upcomingAppts.length, sub: 'Scheduled / confirmed' },
+    todayAppts:  { value: appointments.filter(a => a.status === 'pending' || a.status === 'confirmed').length, sub: 'Pending / confirmed' },
+    upcoming:    { value: upcomingAppts.length, sub: 'Future date only' },
     completed:   { value: appointments.filter(a => a.status === 'completed').length, sub: 'All time' },
     cancelled:   { value: appointments.filter(a => a.status === 'cancelled').length, sub: 'All time' },
   }
@@ -215,7 +215,7 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* Upcoming Appointments */}
+              {/* Recent Appointments — shows latest bookings regardless of date */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
                   <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                     >
                       <CalendarDays size={13} className="text-white" />
                     </div>
-                    <h2 className="font-semibold text-slate-800 text-sm">Upcoming Appointments</h2>
+                    <h2 className="font-semibold text-slate-800 text-sm">Recent Appointments</h2>
                   </div>
                   <a
                     href="/dashboard/appointments"
@@ -235,14 +235,24 @@ export default function DashboardPage() {
                   </a>
                 </div>
 
-                {upcomingAppts.length === 0 ? (
-                  <div className="py-12 text-center text-slate-400 text-sm">No upcoming appointments.</div>
+                {appointments.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 text-sm">No appointments booked yet.</div>
                 ) : (
                   <div className="divide-y divide-slate-50">
-                    {upcomingAppts.slice(0, 6).map(appt => (
+                    {appointments.slice(0, 6).map(appt => (
                       <div key={appt.id} className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-                          <CalendarDays size={13} className="text-rose-500" />
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          appt.status === 'confirmed' ? 'bg-emerald-100' :
+                          appt.status === 'cancelled' ? 'bg-red-100' :
+                          appt.status === 'completed' ? 'bg-slate-100' :
+                          'bg-rose-100'
+                        }`}>
+                          <CalendarDays size={13} className={
+                            appt.status === 'confirmed' ? 'text-emerald-500' :
+                            appt.status === 'cancelled' ? 'text-red-400' :
+                            appt.status === 'completed' ? 'text-slate-400' :
+                            'text-rose-500'
+                          } />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-slate-700 truncate">{appt.customer_name}</p>
@@ -250,7 +260,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-xs font-semibold text-slate-600">{appt.appointment_date}</p>
-                          <p className="text-xs text-slate-400">{appt.appointment_time}</p>
+                          <p className="text-xs text-slate-400">{appt.appointment_time?.slice(0, 5)}</p>
                         </div>
                         <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${getStatusColor(appt.status)}`}>
                           {appt.status}
