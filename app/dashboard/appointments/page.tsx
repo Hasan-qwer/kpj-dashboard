@@ -302,13 +302,16 @@ export default function AppointmentsPage() {
         {/* Quick stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total', value: appointments.length, gradient: 'from-slate-400 to-slate-600', icon: CalendarDays },
-            { label: 'Today', value: todayCount, gradient: 'from-sky-400 to-blue-600', icon: Clock },
-            { label: 'Upcoming', value: upcomingCount, gradient: 'from-emerald-400 to-teal-500', icon: CalendarDays },
-            { label: 'Confirmed', value: counts.confirmed ?? 0, gradient: 'from-violet-400 to-purple-600', icon: UserRound },
-          ].map(({ label, value, gradient, icon: Icon }) => (
+            { label: 'Total',     value: appointments.length,   iconBg: 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)', icon: CalendarDays },
+            { label: 'Today',     value: todayCount,            iconBg: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)', icon: Clock },
+            { label: 'Upcoming',  value: upcomingCount,         iconBg: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)', icon: CalendarDays },
+            { label: 'Confirmed', value: counts.confirmed ?? 0, iconBg: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)', icon: UserRound },
+          ].map(({ label, value, iconBg, icon: Icon }) => (
             <div key={label} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 shadow`}>
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow"
+                style={{ background: iconBg }}
+              >
                 <Icon size={15} className="text-white" />
               </div>
               <div>

@@ -20,45 +20,41 @@ const NAV_ITEMS = [
     label: 'Overview',
     icon: LayoutDashboard,
     exact: true,
-    color: 'from-sky-400 to-blue-500',
-    glow: 'shadow-blue-500/40',
+    bg: 'linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%)',
   },
   {
     href: '/dashboard/calls',
     label: 'Calls',
     icon: Phone,
-    color: 'from-violet-400 to-purple-600',
-    glow: 'shadow-purple-500/40',
+    bg: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)',
   },
   {
     href: '/dashboard/appointments',
     label: 'Appointments',
     icon: CalendarDays,
-    color: 'from-pink-400 to-rose-500',
-    glow: 'shadow-rose-500/40',
+    bg: 'linear-gradient(135deg, #f472b6 0%, #f43f5e 100%)',
   },
   {
     href: '/dashboard/doctors',
     label: 'Doctors',
     icon: UserRound,
-    color: 'from-emerald-400 to-teal-500',
-    glow: 'shadow-teal-500/40',
+    bg: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)',
   },
   {
     href: '/dashboard/schedules',
     label: 'Schedules',
     icon: CalendarClock,
-    color: 'from-amber-400 to-orange-500',
-    glow: 'shadow-orange-500/40',
+    bg: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)',
   },
   {
     href: '/dashboard/status',
     label: 'Status',
     icon: Activity,
-    color: 'from-red-400 to-rose-600',
-    glow: 'shadow-rose-500/40',
+    bg: 'linear-gradient(135deg, #f87171 0%, #e11d48 100%)',
   },
 ]
+
+const SIDEBAR_BG = 'linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2548 70%, #112d5a 100%)'
 
 interface SidebarProps {
   open: boolean
@@ -81,26 +77,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — desktop: always visible in flow; mobile: overlay when open */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 flex w-72 flex-col transition-transform duration-300 lg:static lg:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full'
+          'flex flex-col w-72 shrink-0 z-30',
+          open ? 'fixed inset-y-0 left-0' : 'max-lg:hidden'
         )}
-        style={{
-          background: 'linear-gradient(160deg, #0a1628 0%, #0d1f3c 40%, #0f2548 70%, #112d5a 100%)',
-        }}
+        style={{ background: SIDEBAR_BG }}
       >
-        {/* Top glow effect */}
+        {/* Top glow */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
 
         {/* Logo area */}
         <div className="px-6 pt-7 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* KPJ badge */}
               <div className="relative">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                  style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)' }}
+                >
                   <Stethoscope size={18} className="text-white" />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#0a1628] animate-pulse" />
@@ -128,8 +124,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </p>
 
         {/* Nav items */}
-        <nav className="flex-1 px-4 space-y-1">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, exact, color, glow }) => {
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map(({ href, label, icon: Icon, exact, bg }) => {
             const active = isActive(href, exact)
             return (
               <Link
@@ -144,18 +140,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 )}
               >
                 {/* Colored icon badge */}
-                <div className={cn(
-                  'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200',
-                  active
-                    ? `bg-gradient-to-br ${color} shadow-md ${glow}`
-                    : `bg-white/5 group-hover:bg-gradient-to-br group-hover:${color} group-hover:shadow-md group-hover:${glow}`
-                )}>
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200"
+                  style={{ background: active ? bg : 'rgba(255,255,255,0.06)' }}
+                >
                   <Icon size={15} className="text-white" />
                 </div>
 
                 <span className="flex-1">{label}</span>
 
-                {/* Active indicator */}
                 {active && (
                   <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                 )}
@@ -165,10 +158,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Bottom section */}
-        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
+        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4 mt-4" />
 
         <div className="px-6 pb-6 space-y-3">
-          {/* Hospital info */}
           <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3">
             <p className="text-blue-300 text-xs font-semibold mb-1">KPJ Damansara Specialist</p>
             <p className="text-blue-400/60 text-[11px] leading-relaxed">
@@ -178,7 +170,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </p>
           </div>
 
-          {/* Live badge */}
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
             <span className="text-emerald-400 text-xs font-medium">Agent Online</span>

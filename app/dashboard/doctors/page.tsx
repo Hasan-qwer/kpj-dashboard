@@ -6,31 +6,33 @@ import { DOCTORS, SPECIALTIES } from '@/lib/doctors-data'
 import { Search, ExternalLink, UserRound } from 'lucide-react'
 
 const LANG_COLORS: Record<string, string> = {
-  English: 'bg-sky-100 text-sky-700',
-  Malay: 'bg-emerald-100 text-emerald-700',
-  Mandarin: 'bg-red-100 text-red-700',
-  Tamil: 'bg-orange-100 text-orange-700',
+  English:   'bg-sky-100 text-sky-700',
+  Malay:     'bg-emerald-100 text-emerald-700',
+  Mandarin:  'bg-red-100 text-red-700',
+  Tamil:     'bg-orange-100 text-orange-700',
   Cantonese: 'bg-amber-100 text-amber-700',
-  Hindi: 'bg-purple-100 text-purple-700',
+  Hindi:     'bg-purple-100 text-purple-700',
 }
 
-const DEPT_COLORS: Record<string, string> = {
-  'Cardiology': 'from-red-400 to-rose-500',
-  'Oncology': 'from-violet-400 to-purple-600',
-  'Orthopaedic': 'from-amber-400 to-orange-500',
-  'Paediatrics': 'from-cyan-400 to-sky-500',
-  'Obstetrics': 'from-pink-400 to-rose-500',
-  'Neurology': 'from-indigo-400 to-blue-600',
-  'Dermatology': 'from-pink-300 to-fuchsia-500',
-  'Psychiatry': 'from-teal-400 to-emerald-500',
-  'Gastro': 'from-lime-400 to-green-500',
-  'Urology': 'from-sky-400 to-blue-600',
-  'ENT': 'from-orange-400 to-amber-500',
+const DEPT_GRADIENTS: Record<string, string> = {
+  Cardiology:   'linear-gradient(135deg, #f87171 0%, #f43f5e 100%)',
+  Oncology:     'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)',
+  Orthopaedic:  'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)',
+  Paediatrics:  'linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%)',
+  Obstetrics:   'linear-gradient(135deg, #f472b6 0%, #f43f5e 100%)',
+  Neurology:    'linear-gradient(135deg, #818cf8 0%, #4338ca 100%)',
+  Dermatology:  'linear-gradient(135deg, #f9a8d4 0%, #d946ef 100%)',
+  Psychiatry:   'linear-gradient(135deg, #2dd4bf 0%, #10b981 100%)',
+  Gastro:       'linear-gradient(135deg, #a3e635 0%, #22c55e 100%)',
+  Urology:      'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)',
+  ENT:          'linear-gradient(135deg, #fb923c 0%, #f59e0b 100%)',
 }
 
-function getDeptGradient(dept: string) {
-  const key = Object.keys(DEPT_COLORS).find(k => dept.toLowerCase().includes(k.toLowerCase()))
-  return key ? DEPT_COLORS[key] : 'from-slate-400 to-slate-600'
+function getDeptGradient(dept: string): string {
+  const key = Object.keys(DEPT_GRADIENTS).find(k =>
+    dept.toLowerCase().includes(k.toLowerCase())
+  )
+  return key ? DEPT_GRADIENTS[key] : 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)'
 }
 
 function DoctorCard({ doctor }: { doctor: (typeof DOCTORS)[0] }) {
@@ -48,12 +50,15 @@ function DoctorCard({ doctor }: { doctor: (typeof DOCTORS)[0] }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 group overflow-hidden">
       {/* Colored top bar */}
-      <div className={`h-1.5 bg-gradient-to-r ${gradient}`} />
+      <div className="h-1.5" style={{ background: gradient }} />
 
       <div className="p-5">
         {/* Avatar + name */}
         <div className="flex items-start gap-3 mb-3">
-          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform duration-200`}>
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform duration-200"
+            style={{ background: gradient }}
+          >
             <span className="text-white font-bold text-sm">{initials || '?'}</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -62,7 +67,7 @@ function DoctorCard({ doctor }: { doctor: (typeof DOCTORS)[0] }) {
           </div>
         </div>
 
-        {/* Specialty chip */}
+        {/* Specialty */}
         <p className="text-xs text-slate-500 leading-relaxed mb-3 line-clamp-2">{doctor.specialty}</p>
 
         {/* Languages */}
@@ -90,7 +95,8 @@ function DoctorCard({ doctor }: { doctor: (typeof DOCTORS)[0] }) {
             href={doctor.profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-gradient-to-r ${gradient} text-white hover:opacity-90 transition-opacity`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white hover:opacity-90 transition-opacity"
+            style={{ background: gradient }}
           >
             <ExternalLink size={11} />
             View Profile
@@ -164,11 +170,15 @@ export default function DoctorsPage() {
                     onClick={() => setSelectedLang(lang)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                       selectedLang === lang
-                        ? 'bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-md shadow-blue-200'
+                        ? 'text-white shadow-md'
                         : LANG_COLORS[lang]
                           ? `${LANG_COLORS[lang]} border border-current/20`
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
+                    style={selectedLang === lang
+                      ? { background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)' }
+                      : undefined
+                    }
                   >
                     {lang}
                   </button>
@@ -180,7 +190,10 @@ export default function DoctorsPage() {
 
         {/* Count */}
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+          <div
+            className="w-6 h-6 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)' }}
+          >
             <UserRound size={12} className="text-white" />
           </div>
           <span className="text-sm font-semibold text-slate-700">

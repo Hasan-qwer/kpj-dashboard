@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import { Header } from '@/components/header'
 import { formatDuration, formatTimestamp } from '@/lib/utils'
 import type { RetellCall } from '@/types'
@@ -19,8 +20,8 @@ function PulsingDot({ color }: { color: string }) {
   )
 }
 
-interface GaugeProps { value: number; max: number; color: string; label: string }
-function Gauge({ value, max, color, label }: GaugeProps) {
+interface GaugeProps { value: number; max: number; barStyle: CSSProperties; label: string }
+function Gauge({ value, max, barStyle, label }: GaugeProps) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100))
   return (
     <div>
@@ -30,8 +31,8 @@ function Gauge({ value, max, color, label }: GaugeProps) {
       </div>
       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-700 ${color}`}
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${pct}%`, ...barStyle }}
         />
       </div>
     </div>
@@ -58,13 +59,11 @@ export default function StatusPage() {
 
   useEffect(() => { fetchCalls() }, [fetchCalls])
 
-  // Auto-refresh every 30s
   useEffect(() => {
     const id = setInterval(() => fetchCalls(true), 30_000)
     return () => clearInterval(id)
   }, [fetchCalls])
 
-  // Derived metrics
   const ongoing = calls.filter(c => c.call_status === 'ongoing')
   const ended = calls.filter(c => c.call_status === 'ended')
   const errored = calls.filter(c => c.call_status === 'error')
@@ -103,6 +102,39 @@ export default function StatusPage() {
     { label: 'Dashboard', status: 'operational', icon: Zap },
   ]
 
+  const keyMetrics = [
+    {
+      label: 'Live Calls',
+      value: ongoing.length,
+      icon: Phone,
+      iconBg: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)',
+      sub: ongoing.length === 0 ? 'No active calls' : 'In progress',
+    },
+    {
+      label: "Today's Calls",
+      value: todayCalls.length,
+      icon: PhoneIncoming,
+      iconBg: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)',
+      sub: 'Since midnight',
+    },
+    {
+      label: 'Success Rate',
+      value: `${successRate}%`,
+      icon: CheckCircle2,
+      iconBg: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)',
+      sub: `${ended.length} ended calls`,
+    },
+    {
+      label: 'Errors',
+      value: errored.length,
+      icon: PhoneMissed,
+      iconBg: errored.length > 0
+        ? 'linear-gradient(135deg, #f87171 0%, #e11d48 100%)'
+        : 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)',
+      sub: errored.length === 0 ? 'No errors' : 'Need attention',
+    },
+  ]
+
   return (
     <div className="flex flex-col min-h-full bg-slate-50">
       <Header
@@ -114,7 +146,8 @@ export default function StatusPage() {
 
       <div className="flex-1 p-4 lg:p-6 space-y-5">
         {/* Status banner */}
-        <div className="rounded-2xl p-5 text-white relative overflow-hidden flex items-center gap-5"
+        <div
+          className="rounded-2xl p-5 text-white relative overflow-hidden flex items-center gap-5"
           style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)' }}
         >
           <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/5" />
@@ -136,14 +169,12 @@ export default function StatusPage() {
           <>
             {/* Key metrics */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { label: 'Live Calls', value: ongoing.length, icon: Phone, gradient: 'from-emerald-400 to-teal-500', sub: ongoing.length === 0 ? 'No active calls' : 'In progress' },
-                { label: 'Today\'s Calls', value: todayCalls.length, icon: PhoneIncoming, gradient: 'from-sky-400 to-blue-600', sub: 'Since midnight' },
-                { label: 'Success Rate', value: `${successRate}%`, icon: CheckCircle2, gradient: 'from-violet-400 to-purple-600', sub: `${ended.length} ended calls` },
-                { label: 'Errors', value: errored.length, icon: PhoneMissed, gradient: errored.length > 0 ? 'from-red-400 to-rose-600' : 'from-slate-400 to-slate-500', sub: errored.length === 0 ? 'No errors' : 'Need attention' },
-              ].map(({ label, value, icon: Icon, gradient, sub }) => (
+              {keyMetrics.map(({ label, value, icon: Icon, iconBg, sub }) => (
                 <div key={label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 shadow`}>
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow"
+                    style={{ background: iconBg }}
+                  >
                     <Icon size={18} className="text-white" />
                   </div>
                   <p className="text-2xl font-bold text-slate-800">{value}</p>
@@ -157,7 +188,10 @@ export default function StatusPage() {
               {/* Call volume — 24h bar chart */}
               <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 100%)' }}
+                  >
                     <TrendingUp size={13} className="text-white" />
                   </div>
                   <h3 className="font-semibold text-slate-800 text-sm">Call Volume — Last 24 Hours</h3>
@@ -165,25 +199,26 @@ export default function StatusPage() {
                 <div className="flex items-end gap-1 h-28">
                   {hourBuckets.map((count, h) => {
                     const height = Math.round((count / maxBucket) * 100)
-                    const currentH = new Date().getHours()
-                    const isNow = h === currentH
+                    const isNow = h === new Date().getHours()
+                    const barBg = isNow
+                      ? 'linear-gradient(to top, #3b82f6, #38bdf8)'
+                      : count > 0
+                      ? 'linear-gradient(to top, rgba(147,197,253,0.6), rgba(186,230,253,0.6))'
+                      : '#f1f5f9'
+
                     return (
                       <div key={h} className="flex-1 flex flex-col items-center gap-1 group relative">
-                        {/* Tooltip */}
                         {count > 0 && (
                           <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex bg-slate-800 text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
                             {h}:00 — {count} call{count !== 1 ? 's' : ''}
                           </div>
                         )}
                         <div
-                          className={`w-full rounded-t transition-all ${
-                            isNow
-                              ? 'bg-gradient-to-t from-blue-500 to-sky-400'
-                              : count > 0
-                              ? 'bg-gradient-to-t from-blue-300/60 to-sky-300/60'
-                              : 'bg-slate-100'
-                          }`}
-                          style={{ height: `${Math.max(height, count > 0 ? 8 : 2)}%` }}
+                          className="w-full rounded-t transition-all duration-300"
+                          style={{
+                            height: `${Math.max(height, count > 0 ? 8 : 2)}%`,
+                            background: barBg,
+                          }}
                         />
                       </div>
                     )
@@ -201,7 +236,10 @@ export default function StatusPage() {
               {/* System components */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #34d399 0%, #14b8a6 100%)' }}
+                  >
                     <Server size={13} className="text-white" />
                   </div>
                   <h3 className="font-semibold text-slate-800 text-sm">Components</h3>
@@ -235,51 +273,46 @@ export default function StatusPage() {
 
             {/* Duration & call breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Duration metrics */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
+                  >
                     <Clock size={13} className="text-white" />
                   </div>
                   <h3 className="font-semibold text-slate-800 text-sm">Duration Metrics</h3>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-sm text-slate-500">Average duration</span>
-                    <span className="text-sm font-bold text-slate-800">{formatDuration(avgMs)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-sm text-slate-500">Longest call</span>
-                    <span className="text-sm font-bold text-slate-800">{formatDuration(maxMs)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                    <span className="text-sm text-slate-500">Calls with recording</span>
-                    <span className="text-sm font-bold text-slate-800">
-                      {calls.filter(c => c.recording_url).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-slate-500">Calls with transcript</span>
-                    <span className="text-sm font-bold text-slate-800">
-                      {calls.filter(c => c.transcript || c.transcript_object?.length).length}
-                    </span>
-                  </div>
+                  {[
+                    { label: 'Average duration', value: formatDuration(avgMs) },
+                    { label: 'Longest call', value: formatDuration(maxMs) },
+                    { label: 'Calls with recording', value: calls.filter(c => c.recording_url).length },
+                    { label: 'Calls with transcript', value: calls.filter(c => c.transcript || c.transcript_object?.length).length },
+                  ].map(({ label, value }, i, arr) => (
+                    <div key={label} className={`flex justify-between items-center py-2 ${i < arr.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                      <span className="text-sm text-slate-500">{label}</span>
+                      <span className="text-sm font-bold text-slate-800">{value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Status breakdown */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #a78bfa 0%, #9333ea 100%)' }}
+                  >
                     <Activity size={13} className="text-white" />
                   </div>
                   <h3 className="font-semibold text-slate-800 text-sm">Call Breakdown</h3>
                 </div>
                 <div className="space-y-3">
-                  <Gauge value={ended.length} max={calls.length} color="bg-gradient-to-r from-slate-400 to-slate-500" label="Ended" />
-                  <Gauge value={ongoing.length} max={calls.length} color="bg-gradient-to-r from-emerald-400 to-teal-500" label="Ongoing" />
-                  <Gauge value={registered.length} max={calls.length} color="bg-gradient-to-r from-sky-400 to-blue-500" label="Registered" />
-                  <Gauge value={errored.length} max={calls.length} color="bg-gradient-to-r from-red-400 to-rose-500" label="Error" />
+                  <Gauge value={ended.length} max={calls.length} barStyle={{ background: 'linear-gradient(90deg, #94a3b8, #475569)' }} label="Ended" />
+                  <Gauge value={ongoing.length} max={calls.length} barStyle={{ background: 'linear-gradient(90deg, #34d399, #14b8a6)' }} label="Ongoing" />
+                  <Gauge value={registered.length} max={calls.length} barStyle={{ background: 'linear-gradient(90deg, #38bdf8, #3b82f6)' }} label="Registered" />
+                  <Gauge value={errored.length} max={calls.length} barStyle={{ background: 'linear-gradient(90deg, #f87171, #e11d48)' }} label="Error" />
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <div className="flex justify-between text-xs text-slate-500">

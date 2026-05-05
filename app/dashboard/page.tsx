@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Header } from '@/components/header'
 import { formatDuration, formatTimestamp, getStatusColor } from '@/lib/utils'
+import { G, CARD_BG, CARD_TEXT, CARD_SUB, CARD_BORDER } from '@/lib/colors'
 import { DOCTORS } from '@/lib/doctors-data'
 import type { RetellCall, Appointment } from '@/types'
 import {
@@ -12,87 +13,17 @@ import {
 } from 'lucide-react'
 
 const STAT_CARDS = [
-  {
-    key: 'callsToday',
-    label: 'Calls Today',
-    icon: Phone,
-    gradient: 'from-sky-400 to-blue-600',
-    bg: 'from-sky-50 to-blue-50',
-    border: 'border-sky-100',
-    text: 'text-blue-600',
-    subText: 'text-blue-400',
-  },
-  {
-    key: 'totalCalls',
-    label: 'Total Calls',
-    icon: TrendingUp,
-    gradient: 'from-violet-400 to-purple-600',
-    bg: 'from-violet-50 to-purple-50',
-    border: 'border-violet-100',
-    text: 'text-violet-600',
-    subText: 'text-violet-400',
-  },
-  {
-    key: 'avgDuration',
-    label: 'Avg Duration',
-    icon: Clock,
-    gradient: 'from-emerald-400 to-teal-500',
-    bg: 'from-emerald-50 to-teal-50',
-    border: 'border-emerald-100',
-    text: 'text-emerald-600',
-    subText: 'text-emerald-400',
-  },
-  {
-    key: 'doctors',
-    label: 'Doctors',
-    icon: UserRound,
-    gradient: 'from-amber-400 to-orange-500',
-    bg: 'from-amber-50 to-orange-50',
-    border: 'border-amber-100',
-    text: 'text-amber-600',
-    subText: 'text-amber-400',
-  },
-  {
-    key: 'todayAppts',
-    label: "Today's Appts",
-    icon: CalendarDays,
-    gradient: 'from-pink-400 to-rose-500',
-    bg: 'from-pink-50 to-rose-50',
-    border: 'border-pink-100',
-    text: 'text-rose-600',
-    subText: 'text-rose-400',
-  },
-  {
-    key: 'upcoming',
-    label: 'Upcoming',
-    icon: Activity,
-    gradient: 'from-cyan-400 to-sky-500',
-    bg: 'from-cyan-50 to-sky-50',
-    border: 'border-cyan-100',
-    text: 'text-cyan-600',
-    subText: 'text-cyan-400',
-  },
-  {
-    key: 'completed',
-    label: 'Completed',
-    icon: CheckCircle2,
-    gradient: 'from-green-400 to-emerald-600',
-    bg: 'from-green-50 to-emerald-50',
-    border: 'border-green-100',
-    text: 'text-green-600',
-    subText: 'text-green-400',
-  },
-  {
-    key: 'cancelled',
-    label: 'Cancelled',
-    icon: AlertCircle,
-    gradient: 'from-red-400 to-rose-600',
-    bg: 'from-red-50 to-rose-50',
-    border: 'border-red-100',
-    text: 'text-red-600',
-    subText: 'text-red-400',
-  },
-]
+  { key: 'callsToday',  label: 'Calls Today',     icon: Phone,         color: 'blue'    },
+  { key: 'totalCalls',  label: 'Total Calls',      icon: TrendingUp,    color: 'purple'  },
+  { key: 'avgDuration', label: 'Avg Duration',     icon: Clock,         color: 'emerald' },
+  { key: 'doctors',     label: 'Doctors',          icon: UserRound,     color: 'amber'   },
+  { key: 'todayAppts',  label: "Today's Appts",    icon: CalendarDays,  color: 'rose'    },
+  { key: 'upcoming',    label: 'Upcoming',         icon: Activity,      color: 'cyan'    },
+  { key: 'completed',   label: 'Completed',        icon: CheckCircle2,  color: 'green'   },
+  { key: 'cancelled',   label: 'Cancelled',        icon: AlertCircle,   color: 'red'     },
+] as const
+
+type StatKey = typeof STAT_CARDS[number]['color']
 
 export default function DashboardPage() {
   const [calls, setCalls] = useState<RetellCall[]>([])
@@ -107,8 +38,8 @@ export default function DashboardPage() {
         fetch('/api/calls?limit=200'),
         fetch('/api/appointments'),
       ])
-      if (callsRes.ok) setCalls(await callsRes.json().then(d => Array.isArray(d) ? d : []))
-      if (apptRes.ok) setAppointments(await apptRes.json().then(d => Array.isArray(d) ? d : []))
+      if (callsRes.ok) setCalls(await callsRes.json().then((d: unknown) => Array.isArray(d) ? d : []))
+      if (apptRes.ok) setAppointments(await apptRes.json().then((d: unknown) => Array.isArray(d) ? d : []))
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -132,14 +63,14 @@ export default function DashboardPage() {
   )
 
   const statValues: Record<string, { value: string | number; sub: string }> = {
-    callsToday: { value: todayCalls.length, sub: `${ongoingCalls.length} ongoing` },
-    totalCalls: { value: calls.length, sub: 'All time' },
+    callsToday:  { value: todayCalls.length, sub: `${ongoingCalls.length} ongoing` },
+    totalCalls:  { value: calls.length, sub: 'All time' },
     avgDuration: { value: formatDuration(avgDuration), sub: 'Per ended call' },
-    doctors: { value: DOCTORS.length, sub: '45+ specialties' },
-    todayAppts: { value: todayAppts.length, sub: 'Scheduled today' },
-    upcoming: { value: upcomingAppts.length, sub: 'Scheduled / confirmed' },
-    completed: { value: appointments.filter(a => a.status === 'completed').length, sub: 'All time' },
-    cancelled: { value: appointments.filter(a => a.status === 'cancelled').length, sub: 'All time' },
+    doctors:     { value: DOCTORS.length, sub: '45+ specialties' },
+    todayAppts:  { value: todayAppts.length, sub: 'Scheduled today' },
+    upcoming:    { value: upcomingAppts.length, sub: 'Scheduled / confirmed' },
+    completed:   { value: appointments.filter(a => a.status === 'completed').length, sub: 'All time' },
+    cancelled:   { value: appointments.filter(a => a.status === 'cancelled').length, sub: 'All time' },
   }
 
   return (
@@ -157,7 +88,6 @@ export default function DashboardPage() {
           className="rounded-2xl p-6 text-white relative overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #002855 0%, #004a9c 50%, #0066cc 100%)' }}
         >
-          {/* Decorative circles */}
           <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/5" />
           <div className="absolute -bottom-10 right-20 w-32 h-32 rounded-full bg-white/5" />
           <div className="absolute top-4 right-36 w-16 h-16 rounded-full bg-sky-400/20" />
@@ -199,36 +129,44 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            {/* Stat cards grid */}
+            {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {STAT_CARDS.map(({ key, label, icon: Icon, gradient, bg, border, text, subText }) => {
+              {STAT_CARDS.map(({ key, label, icon: Icon, color }) => {
                 const stat = statValues[key]
                 return (
                   <div
                     key={key}
-                    className={`relative bg-gradient-to-br ${bg} rounded-2xl border ${border} p-5 overflow-hidden group hover:shadow-md transition-all duration-200`}
+                    className="relative rounded-2xl border p-5 overflow-hidden group hover:shadow-md transition-all duration-200"
+                    style={{
+                      ...CARD_BG[color],
+                      borderColor: CARD_BORDER[color],
+                    }}
                   >
-                    {/* Background decoration */}
                     <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-white/40 group-hover:scale-110 transition-transform duration-300" />
-
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3 shadow-md`}>
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-md"
+                      style={G[color]}
+                    >
                       <Icon size={18} className="text-white" />
                     </div>
-                    <p className={`text-2xl font-bold ${text}`}>{stat.value}</p>
+                    <p className="text-2xl font-bold" style={{ color: CARD_TEXT[color] }}>{stat.value}</p>
                     <p className="text-xs font-semibold text-slate-600 mt-0.5">{label}</p>
-                    <p className={`text-xs ${subText} mt-0.5`}>{stat.sub}</p>
+                    <p className="text-xs mt-0.5" style={{ color: CARD_SUB[color] }}>{stat.sub}</p>
                   </div>
                 )
               })}
             </div>
 
-            {/* Two column layout */}
+            {/* Two-column bottom */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Calls */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center"
+                      style={G.purple}
+                    >
                       <Phone size={13} className="text-white" />
                     </div>
                     <h2 className="font-semibold text-slate-800 text-sm">Recent Calls</h2>
@@ -248,11 +186,8 @@ export default function DashboardPage() {
                     {calls.slice(0, 6).map(call => (
                       <div key={call.call_id} className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          call.call_status === 'ongoing'
-                            ? 'bg-emerald-100'
-                            : call.call_status === 'error'
-                            ? 'bg-red-100'
-                            : 'bg-slate-100'
+                          call.call_status === 'ongoing' ? 'bg-emerald-100' :
+                          call.call_status === 'error' ? 'bg-red-100' : 'bg-slate-100'
                         }`}>
                           <Mic size={13} className={
                             call.call_status === 'ongoing' ? 'text-emerald-600' :
@@ -281,7 +216,10 @@ export default function DashboardPage() {
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center"
+                      style={G.rose}
+                    >
                       <CalendarDays size={13} className="text-white" />
                     </div>
                     <h2 className="font-semibold text-slate-800 text-sm">Upcoming Appointments</h2>
